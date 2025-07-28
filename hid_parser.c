@@ -1,4 +1,14 @@
+//
+// build parser test
+// gcc hid_parser.c -o hid_parser -DPARSER_TEST -Ipico-sdk/lib/tinyusb/src/ -I. -Wall
+//
+
+#ifndef PARSER_TEST
 #include "bsp/board.h"
+#else
+#define CFG_TUSB_MCU OPT_MCU_LPC54XXX
+#endif
+
 #include "tusb.h"
 
 #include "hid_parser.h"
@@ -70,6 +80,10 @@ uint8_t hid_parse_report_descriptor(hid_report_info_t* report_info_arr, uint8_t 
           case RI_MAIN_FEATURE:
             TU_LOG2("INPUT %d\n", data);
             uint16_t offset = (info->num_items == 0) ? 0 : (info->item[info->num_items - 1].bit_offset + info->item[info->num_items - 1].bit_size);
+            if (ri_report_usage_count > ri_report_count) {
+                // skip first uncounted reports
+                info->num_items += ri_report_usage_count - ri_report_count;
+            }
             for (int i = 0; i < ri_report_count; i++) {
                 if (info->num_items + i < MAX_REPORT_ITEMS) {
                     info->item[info->num_items + i].bit_offset = offset;
@@ -95,6 +109,8 @@ uint8_t hid_parse_report_descriptor(hid_report_info_t* report_info_arr, uint8_t 
           break;
 
           case RI_MAIN_COLLECTION:
+            ri_report_usage_count = 0;
+            ri_report_count = 0;
             ri_collection_depth++;
           break;
 
@@ -301,3 +317,112 @@ bool hid_parse_get_item_value(const hid_report_item_t *item, const uint8_t *repo
 
     return true;
 }
+
+#ifdef PARSER_TEST
+
+#if 1
+//static const uint8_t hid_report_desc[] = {
+//    0x05, 0x01, 0x09, 0x02, 0xA1, 0x01, 0x09, 0x01, 0xA1, 0x00, 0x05, 0x09, 0x19, 0x01, 0x29, 0x03,
+//    0x15, 0x00, 0x25, 0x01, 0x95, 0x03, 0x75, 0x01, 0x81, 0x02, 0x95, 0x01, 0x75, 0x05, 0x81, 0x01,
+//    0x05, 0x01, 0x09, 0x30, 0x09, 0x31, 0x09, 0x38, 0x15, 0x81, 0x25, 0x7F, 0x75, 0x08, 0x95, 0x03,
+//    0x81, 0x06, 0xC0, 0xC0
+//};
+static const uint8_t hid_report_desc[] = {
+0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+0x09, 0x02,        // Usage (Mouse)
+0xA1, 0x01,        // Collection (Application)
+0x09, 0x01,        //   Usage (Pointer)
+0xA1, 0x00,        //   Collection (Physical)
+0x05, 0x09,        //     Usage Page (Button)
+0x19, 0x01,        //     Usage Minimum (0x01)
+0x29, 0x03,        //     Usage Maximum (0x03)
+0x15, 0x00,        //     Logical Minimum (0)
+0x25, 0x01,        //     Logical Maximum (1)
+0x75, 0x01,        //     Report Size (1)
+0x95, 0x03,        //     Report Count (3)
+0x81, 0x02,        //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x75, 0x05,        //     Report Size (5)
+0x95, 0x01,        //     Report Count (1)
+0x81, 0x01,        //     Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //     Usage Page (Generic Desktop Ctrls)
+0x09, 0x30,        //     Usage (X)
+0x09, 0x31,        //     Usage (Y)
+0x09, 0x38,        //     Usage (Wheel)
+0x15, 0x81,        //     Logical Minimum (-127)
+0x25, 0x7F,        //     Logical Maximum (127)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x03,        //     Report Count (3)
+0x81, 0x06,        //     Input (Data,Var,Rel,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0xC0,              // End Collection
+};
+#else
+static const uint8_t hid_report_desc[] = {
+0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+0x09, 0x02,        // Usage (Mouse)
+0xA1, 0x01,        // Collection (Application)
+0x05, 0x09,        //   Usage Page (Button)
+0x19, 0x01,        //   Usage Minimum (0x01)
+0x29, 0x03,        //   Usage Maximum (0x03)
+0x15, 0x00,        //   Logical Minimum (0)
+0x25, 0x01,        //   Logical Maximum (1)
+0x95, 0x03,        //   Report Count (3)
+0x75, 0x01,        //   Report Size (1)
+0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x95, 0x01,        //   Report Count (1)
+0x75, 0x05,        //   Report Size (5)
+0x81, 0x03,        //   Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
+0x09, 0x01,        //   Usage (Pointer)
+0xA1, 0x00,        //   Collection (Physical)
+0x09, 0x30,        //     Usage (X)
+0x09, 0x31,        //     Usage (Y)
+0x15, 0x81,        //     Logical Minimum (-127)
+0x25, 0x7F,        //     Logical Maximum (127)
+0x75, 0x08,        //     Report Size (8)
+0x95, 0x02,        //     Report Count (2)
+0x81, 0x06,        //     Input (Data,Var,Rel,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              //   End Collection
+0x09, 0x38,        //   Usage (Wheel)
+0x15, 0x81,        //   Logical Minimum (-127)
+0x25, 0x7F,        //   Logical Maximum (127)
+0x75, 0x08,        //   Report Size (8)
+0x95, 0x01,        //   Report Count (1)
+0x81, 0x06,        //   Input (Data,Var,Rel,No Wrap,Linear,Preferred State,No Null Position)
+0xC0,              // End Collection
+};
+#endif
+
+#define MAX_REPORT 4
+
+int main(int argc, char *argv[])
+{
+    hid_report_info_t info_arr;
+
+    uint8_t num = hid_parse_report_descriptor(&info_arr, MAX_REPORT, hid_report_desc, sizeof(hid_report_desc));
+
+    printf("parsed %d report(s)\n", num);
+
+    printf("report id  %02x\n", info_arr.report_id);
+    printf("usage      %02x\n", info_arr.usage);
+    printf("usage page %04x\n", info_arr.usage_page);
+
+    for (int i = 0; i < info_arr.num_items; i++) {
+        printf(" %d\n", i);
+        printf("  type         %02x\n", info_arr.item[i].item_type);
+        printf("  bit offset   %d\n", info_arr.item[i].bit_offset);
+        printf("  bits size    %d\n", info_arr.item[i].bit_size);
+        printf("  flags        %04x\n", info_arr.item[i].item_flags);
+        printf("  usage        %04x\n", info_arr.item[i].attributes.usage.usage);
+        printf("  usage page   %04x\n", info_arr.item[i].attributes.usage.page);
+        printf("  unit type    %08x\n", info_arr.item[i].attributes.unit.type);
+        printf("  unit exp     %02x\n", info_arr.item[i].attributes.unit.exponent);
+        printf("  logical min  %d\n", info_arr.item[i].attributes.logical.min);
+        printf("  logical max  %d\n", info_arr.item[i].attributes.logical.max);
+        printf("  physical min %d\n", info_arr.item[i].attributes.physical.min);
+        printf("  physical max %d\n", info_arr.item[i].attributes.physical.max);
+    }
+
+    return 0;
+}
+#endif
