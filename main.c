@@ -180,7 +180,7 @@ void tuh_xpad_read_cb(uint8_t dev_addr, uint8_t *report, xpad_controller_t *info
     if (info->buttons & XPAD_PAD_B)     b |= 0x40; // B
     if (info->buttons & XPAD_PAD_X)     b |= 0x20; // Z
     if (info->buttons & XPAD_PAD_Y)     b |= 0x10; // R
-    //if (info->buttons & XPAD_PAD_LS)    b1 |= 0x20; // L
+    if (info->buttons & XPAD_PAD_STICK_L)    b1 |= 0x20; // L
 
     // Start
     if (info->buttons & XPAD_START)     b |= 0x10;
