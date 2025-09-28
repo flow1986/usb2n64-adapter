@@ -1,3 +1,13 @@
+forked and changed pin mapping:
+
+a - a
+b - b
+z - x
+r - y
+
+etc
+
+
 # USB to N64 gamepad adapter
 
 This adapter allows you to use USB gamepads with Nintendo N64 console.
