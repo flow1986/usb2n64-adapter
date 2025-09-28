@@ -1,10 +1,10 @@
 forked and changed pin mapping:
 
-a - a
-b - b
-z - x
-r - y
-C Buttons: l1,r1,l2,r2
+a - a: 
+b - b: 
+z - x: 
+r - y: 
+C Buttons: l1,r1,l2,r2: 
 
 and you can use both gamepad sticks as Analog stick (left stick is master stick, an if left stick is idle => right stick is used)
 
