@@ -137,7 +137,7 @@ void tuh_xpad_read_cb(uint8_t dev_addr, uint8_t *report, xpad_controller_t *info
 
 //    printf("buttons %04X lx=%d ly=%d rx=%d ry=%d lt=%d rt=%d\n", info->buttons, info->lx, info->ly, info->rx, info->ry, info->lt, info->rt);
 
-    if (info->buttons & XPAD_HAT_UP)    b |= 0x08; // D-U    D-UP
+    /*if (info->buttons & XPAD_HAT_UP)    b |= 0x08; // D-U    D-UP
     if (info->buttons & XPAD_HAT_DOWN)  b |= 0x04; // D-D    D-D
     if (info->buttons & XPAD_HAT_LEFT)  b |= 0x02; // D-L    D-L
     if (info->buttons & XPAD_HAT_RIGHT) b |= 0x01; // D-R    D-R
@@ -160,6 +160,46 @@ void tuh_xpad_read_cb(uint8_t dev_addr, uint8_t *report, xpad_controller_t *info
     buttons[1] = b1;
     sticks[0] = analog_value(info->lx);
     sticks[1] = analog_value(info->ly);
+
+	*/
+
+	/ D-Pad
+    if (info->buttons & XPAD_HAT_UP)    b |= 0x08;
+    if (info->buttons & XPAD_HAT_DOWN)  b |= 0x04;
+    if (info->buttons & XPAD_HAT_LEFT)  b |= 0x02;
+    if (info->buttons & XPAD_HAT_RIGHT) b |= 0x01;
+
+    // C-Buttons
+    if (info->buttons & XPAD_PAD_LB)    b1 |= 0x08; // C-Up
+    if (info->buttons & XPAD_PAD_RB)    b1 |= 0x04; // C-Down
+    if (info->lt > 512)                 b1 |= 0x02; // C-Left
+    if (info->rt > 512)                 b1 |= 0x01; // C-Right
+
+    // Standard Buttons
+    if (info->buttons & XPAD_PAD_A)     b |= 0x80; // A
+    if (info->buttons & XPAD_PAD_B)     b |= 0x40; // B
+    if (info->buttons & XPAD_PAD_X)     b |= 0x20; // Z
+    if (info->buttons & XPAD_PAD_Y)     b |= 0x10; // R
+    //if (info->buttons & XPAD_PAD_LS)    b1 |= 0x20; // L
+
+    // Start
+    if (info->buttons & XPAD_START)     b |= 0x10;
+
+    // Stick-Priorisierung: linker bevorzugt
+    if (abs(analog_value(info->lx)) > 10 || abs(analog_value(info->ly)) > 10) {
+        sticks[0] = analog_value(info->lx);
+        sticks[1] = analog_value(info->ly);
+    } else {
+        sticks[0] = analog_value(info->rx);
+        sticks[1] = analog_value(info->ry);
+    }
+
+    buttons[0] = b;
+    buttons[1] = b1;
+
+
+
+	
 
     if (info->buttons & XPAD_XLOGO) {
 	use_rumble_pack = !use_rumble_pack;
